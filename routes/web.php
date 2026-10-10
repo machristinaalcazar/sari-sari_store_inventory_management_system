@@ -45,4 +45,4 @@ Route::middleware(['auth'])->group(function () {
     // Shared Sales Entry Route
     Route::get('/sales/create', [SaleController::class, 'create'])->name('sales.create');
     Route::post('/sales', [SaleController::class, 'store'])->name('sales.store');
-});
+}); 
