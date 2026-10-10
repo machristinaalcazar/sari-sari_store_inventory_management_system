@@ -28,7 +28,18 @@ Route::middleware(['auth'])->group(function () {
         ->group(function () {
             Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
             Route::resource('users', UserController::class);
-            Route::resource('products', ProductController::class);
+            
+            // Resource Route for Products (Properly prefixed and named within admin group)
+            Route::resource('products', ProductController::class)->names([
+                'index'   => 'products.index',
+                'create'  => 'products.create',
+                'store'   => 'products.store',
+                'show'    => 'products.show',
+                'edit'    => 'products.edit',
+                'update'  => 'products.update',
+                'destroy' => 'products.destroy',
+            ]);
+
             Route::get('/stock-in', [StockInController::class, 'create'])->name('stock_in.create');
             Route::post('/stock-in', [StockInController::class, 'store'])->name('stock_in.store');
             Route::get('/sales-report', [SaleController::class, 'index'])->name('sales.index');
@@ -45,4 +56,4 @@ Route::middleware(['auth'])->group(function () {
     // Shared Sales Entry Route
     Route::get('/sales/create', [SaleController::class, 'create'])->name('sales.create');
     Route::post('/sales', [SaleController::class, 'store'])->name('sales.store');
-}); 
+});

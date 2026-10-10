@@ -7,17 +7,34 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function index()
+    /**
+     * Display a listing of the products with search and pagination support.
+     */
+    public function index(Request $request)
     {
-        $products = Product::all();
+        $search = $request->input('search');
+
+        // Use paginate() instead of get() or all() so Blade's links() method works correctly
+        $products = Product::when($search, function ($query, $search) {
+                return $query->where('name', 'like', "%{$search}%")
+                             ->orWhere('category', 'like', "%{$search}%");
+            })
+            ->paginate(10); // You can change the number of items per page if needed
+
         return view('products.index', compact('products'));
     }
 
+    /**
+     * Show the form for creating a new product.
+     */
     public function create()
     {
         return view('products.create');
     }
 
+    /**
+     * Store a newly created product in storage.
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -33,11 +50,17 @@ class ProductController extends Controller
         return redirect()->route('admin.products.index')->with('success', 'Product added successfully.');
     }
 
+    /**
+     * Show the form for editing the specified product.
+     */
     public function edit(Product $product)
     {
         return view('products.edit', compact('product'));
     }
 
+    /**
+     * Update the specified product in storage.
+     */
     public function update(Request $request, Product $product)
     {
         $request->validate([
@@ -53,6 +76,9 @@ class ProductController extends Controller
         return redirect()->route('admin.products.index')->with('success', 'Product updated successfully.');
     }
 
+    /**
+     * Remove the specified product from storage.
+     */
     public function destroy(Product $product)
     {
         $product->delete();

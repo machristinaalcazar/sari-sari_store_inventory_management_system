@@ -11,7 +11,7 @@
 <!-- Search Form Section -->
 <div class="card shadow-sm mb-3">
     <div class="card-body">
-        <form action="{{ route('products.index') }}" method="GET" class="row g-3">
+        <form action="{{ route('admin.products.index') }}" method="GET" class="row g-3">
             <div class="col-md-10">
                 <input type="text" name="search" class="form-control" placeholder="Search by product name or category..." value="{{ request('search') }}">
             </div>
