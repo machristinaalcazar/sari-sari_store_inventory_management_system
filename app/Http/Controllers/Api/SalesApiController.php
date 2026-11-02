@@ -44,7 +44,7 @@ class SalesApiController extends Controller
             foreach ($validated['items'] as $item) {
                 $product = Product::findOrFail($item['product_id']);
 
-                if ($product->quantity < $item['quantity']) {
+                if ($product->stock_quantity < $item['quantity']) {
                     DB::rollBack();
                     return response()->json([
                         'status' => 'error',
@@ -59,11 +59,11 @@ class SalesApiController extends Controller
                     'sale_id' => $sale->id,
                     'product_id' => $product->id,
                     'quantity' => $item['quantity'],
-                    'price' => $product->price,
+                    'unit_price' => $product->price,
                     'subtotal' => $subtotal,
                 ]);
 
-                $product->decrement('quantity', $item['quantity']);
+                $product->decrement('stock_quantity', $item['quantity']);
             }
 
             $sale->update(['total_amount' => $totalAmount]);
@@ -73,7 +73,7 @@ class SalesApiController extends Controller
             return response()->json([
                 'status' => 'success',
                 'message' => 'Sale recorded successfully',
-                'data' => $sale->load('items'),
+                'data' => $sale->load('items.product'),
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();

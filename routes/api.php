@@ -1,53 +1,74 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AuthApiController;
-use App\Http\Controllers\Api\ProductApiController;
-use App\Http\Controllers\Api\StockApiController;
-use App\Http\Controllers\Api\SalesApiController;
+use App\Http\Controllers\ApiAuthController;
+use App\Http\Controllers\API\ProductApiController;
+use App\Http\Controllers\API\SalesApiController;
+use App\Http\Controllers\API\StockApiController;
 
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "api" middleware group. Make something great!
+|
 */
 
-// Fallback GET route para sa /api/login
-Route::get('/login', function () {
-    return response()->json([
-        'status' => 'error',
-        'message' => 'The GET method is not supported for api/login. Please send a POST request with email and password in the request body.',
-    ], 405);
-});
-
-// Public Auth Route (POST)
-Route::post('/login', [AuthApiController::class, 'login']);
+// ==========================================
+// 1. Public Authentication Routes
+// ==========================================
+Route::post('/register', [ApiAuthController::class, 'register']);
+Route::post('/login', [ApiAuthController::class, 'login']);
 
 // ==========================================
-// PUBLIC GET ENDPOINTS (Mabubuksan sa Browser)
+// 2. Public Product Read Routes
 // ==========================================
-Route::get('/products', [ProductApiController::class, 'index'])->name('api.products.index');
-Route::get('/products/{product}', [ProductApiController::class, 'show'])->name('api.products.show');
-Route::get('/inventory/low-stock', [StockApiController::class, 'lowStock']);
-Route::get('/inventory/restock', [StockApiController::class, 'index']); // GET Method para sa Restock History
-Route::get('/sales', [SalesApiController::class, 'index']);
+Route::get('/products', [ProductApiController::class, 'index']);
+Route::get('/products/{id}', [ProductApiController::class, 'show']);
 
 // ==========================================
-// PROTECTED API ROUTES (Nangangailangan ng Sanctum Token)
+// 3. Authenticated Routes (Requires valid Sanctum Token)
 // ==========================================
 Route::middleware('auth:sanctum')->group(function () {
     
-    // Auth Logout
-    Route::post('/logout', [AuthApiController::class, 'logout']);
+    // Auth Profile & Logout Endpoints
+    Route::post('/logout', [ApiAuthController::class, 'logout']);
+    Route::get('/profile', [ApiAuthController::class, 'profile']);
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
 
-    // Inventory Restock Action
+    // Product Management (Mutations restricted to Admin via middleware or gate)
+    Route::middleware('role:admin')->group(function () {
+        Route::post('/products', [ProductApiController::class, 'store']);
+        Route::match(['put', 'patch'], '/products/{id}', [ProductApiController::class, 'update']);
+        Route::delete('/products/{id}', [ProductApiController::class, 'destroy']);
+    });
+
+    // Sales Endpoints
+    Route::get('/sales', [SalesApiController::class, 'index']);
+    Route::post('/sales', [SalesApiController::class, 'store']);
+
+    // Inventory / Stock Endpoints
+    Route::get('/inventory/restock', [StockApiController::class, 'index']);
+    Route::get('/inventory/low-stock', [StockApiController::class, 'lowStock']);
     Route::post('/inventory/restock', [StockApiController::class, 'restock']);
 
-    // Product Write Operations (POST, PUT, DELETE)
-    Route::post('/products', [ProductApiController::class, 'store'])->name('api.products.store');
-    Route::put('/products/{product}', [ProductApiController::class, 'update'])->name('api.products.update');
-    Route::delete('/products/{product}', [ProductApiController::class, 'destroy'])->name('api.products.destroy');
+    // Admin Only Endpoints Group
+    Route::middleware('role:admin')->prefix('admin')->group(function () {
+        Route::get('/dashboard', function () {
+            return response()->json(['message' => 'Welcome Admin']);
+        });
+    });
 
-    // Sales Store Action
-    Route::post('/sales', [SalesApiController::class, 'store']);
+    // Staff Endpoints Group (Accessible by Staff and Admin based on your User model logic)
+    Route::middleware('role:staff')->prefix('staff')->group(function () {
+        Route::get('/inventory', function () {
+            return response()->json(['message' => 'Staff Inventory Access Granted']);
+        });
+    });
 });

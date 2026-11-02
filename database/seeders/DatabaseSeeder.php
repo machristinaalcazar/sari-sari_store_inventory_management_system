@@ -7,24 +7,80 @@ use App\Models\Product;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
-class DatabaseSeeder extends Seeder {
-    public function run(): void {
-        User::create([
-            'name' => 'Owner Admin',
-            'email' => 'admin@saristore.com',
-            'password' => Hash::make('admin123'),
-            'role' => 'admin',
-        ]);
+class DatabaseSeeder extends Seeder 
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void 
+    {
+        // ==========================================
+        // 1. Seed Users (Admin & Staff)
+        // ==========================================
+        User::updateOrCreate(
+            ['email' => 'admin@saristore.com'],
+            [
+                'name' => 'Owner Admin',
+                'password' => Hash::make('admin123'),
+                'role' => 'admin',
+            ]
+        );
 
-        User::create([
-            'name' => 'Store Helper',
-            'email' => 'staff@saristore.com',
-            'password' => Hash::make('staff123'),
-            'role' => 'staff',
-        ]);
+        User::updateOrCreate(
+            ['email' => 'staff@saristore.com'],
+            [
+                'name' => 'Store Helper',
+                'password' => Hash::make('staff123'),
+                'role' => 'staff',
+            ]
+        );
 
-        Product::create(['name' => 'Canned Sardines 155g', 'category' => 'Canned Goods', 'price' => 22.00, 'stock_quantity' => 15, 'reorder_threshold' => 5]);
-        Product::create(['name' => 'Instant Noodles Beef', 'category' => 'Noodles', 'price' => 15.00, 'stock_quantity' => 3, 'reorder_threshold' => 5]);
-        Product::create(['name' => 'Sachet Laundry Powder', 'category' => 'Household', 'price' => 12.00, 'stock_quantity' => 2, 'reorder_threshold' => 5]);
+        // ==========================================
+        // 2. Seed Sample Products (Nakabase sa HeidiSQL Structure)
+        // ==========================================
+        $products = [
+            [
+                'name' => 'Lucky Me Chicken Noodles',
+                'category' => 'Instant Noodles',
+                'price' => 10.00,
+                'stock_quantity' => 20,
+                'reorder_threshold' => 20,
+            ],
+            [
+                'name' => 'SkyFlakes Crackers',
+                'category' => 'Snacks',
+                'price' => 12.00,
+                'stock_quantity' => 15,
+                'reorder_threshold' => 3,
+            ],
+            [
+                'name' => 'Coca-Cola',
+                'category' => 'Beverages',
+                'price' => 85.00,
+                'stock_quantity' => 25,
+                'reorder_threshold' => 5,
+            ],
+            [
+                'name' => 'Sardines',
+                'category' => 'Canned Goods',
+                'price' => 25.00,
+                'stock_quantity' => 15,
+                'reorder_threshold' => 10,
+            ],
+            [
+                'name' => 'Corned Beef',
+                'category' => 'Canned Goods',
+                'price' => 29.00,
+                'stock_quantity' => 10,
+                'reorder_threshold' => 5,
+            ],
+        ];
+
+        foreach ($products as $productData) {
+            Product::updateOrCreate(
+                ['name' => $productData['name']],
+                $productData
+            );
+        }
     }
 }

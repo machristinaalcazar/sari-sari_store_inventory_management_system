@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,33 +16,40 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Register your custom middleware aliases
+        // Register custom middleware aliases for role and access control
         $middleware->alias([
-            'role' => \App\Http\Middleware\RoleMiddleware::class,  
-            // If you are using Spatie Permission package instead, use:
-            // 'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'role'  => \App\Http\Middleware\CheckRole::class,
+            'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'staff' => \App\Http\Middleware\StaffMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        // Force JSON response para sa lahat ng requests na pumapasok sa 'api/*' routes
+        // Force structured JSON responses for all API endpoints
         $exceptions->render(function (\Throwable $e, Request $request) {
             if ($request->is('api/*')) {
+                if ($e instanceof AuthenticationException) {
+                    return response()->json([
+                        'status'  => 'error',
+                        'message' => 'Unauthenticated.',
+                    ], 401);
+                }
+
                 if ($e instanceof MethodNotAllowedHttpException) {
                     return response()->json([
-                        'status' => 'error',
+                        'status'  => 'error',
                         'message' => 'HTTP Method not allowed for this API endpoint.',
                     ], 405);
                 }
 
                 if ($e instanceof NotFoundHttpException) {
                     return response()->json([
-                        'status' => 'error',
+                        'status'  => 'error',
                         'message' => 'API route not found.',
                     ], 404);
                 }
 
                 return response()->json([
-                    'status' => 'error',
+                    'status'  => 'error',
                     'message' => $e->getMessage(),
                 ], 500);
             }

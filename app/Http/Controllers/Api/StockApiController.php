@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class StockApiController extends Controller
 {
-    // GET /api/inventory/restock (Ipinapakita ang lahat ng restock history)
+    // GET /api/inventory/restock
     public function index()
     {
         $stocks = StockIn::with('product')->latest()->get();
@@ -24,7 +24,7 @@ class StockApiController extends Controller
     // GET /api/inventory/low-stock
     public function lowStock()
     {
-        $lowStockProducts = Product::where('quantity', '<=', 5)->get();
+        $lowStockProducts = Product::whereColumn('stock_quantity', '<=', 'reorder_threshold')->get();
 
         return response()->json([
             'status' => 'success',
@@ -38,7 +38,7 @@ class StockApiController extends Controller
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1',
-            'remarks' => 'nullable|string',
+            'supplier' => 'nullable|string|max:255',
         ]);
 
         DB::beginTransaction();
@@ -48,18 +48,18 @@ class StockApiController extends Controller
                 'product_id' => $validated['product_id'],
                 'quantity' => $validated['quantity'],
                 'user_id' => $request->user()->id ?? null,
-                'remarks' => $validated['remarks'] ?? null,
+                'supplier' => $validated['supplier'] ?? null,
             ]);
 
             $product = Product::findOrFail($validated['product_id']);
-            $product->increment('quantity', $validated['quantity']);
+            $product->increment('stock_quantity', $validated['quantity']);
 
             DB::commit();
 
             return response()->json([
                 'status' => 'success',
                 'message' => 'Stock added successfully',
-                'data' => $stockIn,
+                'data' => $stockIn->load('product'),
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();

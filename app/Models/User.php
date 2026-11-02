@@ -20,7 +20,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
+        'role',      // Admin / Staff
+        'google_id', // Para sa Google Login / Socialite
     ];
 
     /**
@@ -44,5 +45,21 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Check if the user is an administrator.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Check if the user is staff (or an admin fallback).
+     */
+    public function isStaff(): bool
+    {
+        return $this->role === 'staff' || $this->role === 'admin';
     }
 }
